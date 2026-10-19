@@ -55,12 +55,13 @@ jobs:
     - name: Build TDLib Host Tools
       run: |
         echo "🔨 Building TDLib host tools..."
-        mkdir build-host
+        cd $GITHUB_WORKSPACE
+        mkdir -p build-host
         cd build-host
 
         cmake -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
-          ..
+          $GITHUB_WORKSPACE
 
         ninja -j4
 
@@ -72,7 +73,8 @@ jobs:
     - name: Build TDLib for Android ARM64
       run: |
         echo "🎯 Building TDLib for Android arm64-v8a..."
-        mkdir build-android
+        cd $GITHUB_WORKSPACE
+        mkdir -p build-android
         cd build-android
 
         cmake -G Ninja \
@@ -81,7 +83,7 @@ jobs:
           -DANDROID_PLATFORM=android-21 \
           -DCMAKE_BUILD_TYPE=Release \
           -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
-          ..
+          $GITHUB_WORKSPACE
 
         ninja -j4
 
