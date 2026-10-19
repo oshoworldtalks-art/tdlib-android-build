@@ -89,9 +89,11 @@ jobs:
         make -j4
         make install_sw
 
-        echo "OPENSSL_ROOT_DIR=$HOME/openssl-android-arm64" >> $GITHUB_ENV
         echo "✅ OpenSSL for Android ARM64 built"
         ls -lh $HOME/openssl-android-arm64/lib/
+
+        # Export for use in build
+        echo "OPENSSL_ANDROID_ARM64=$HOME/openssl-android-arm64" >> $GITHUB_ENV
 
     - name: Build TDLib for Android ARM64
       run: |
@@ -100,9 +102,7 @@ jobs:
         mkdir -p build-android
         cd build-android
 
-        # Explicit OpenSSL paths for CMake
-        OPENSSL_ANDROID=$HOME/openssl-android-arm64
-
+        # Use the exported environment variable
         cmake -G Ninja \
           -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=arm64-v8a \
@@ -111,10 +111,10 @@ jobs:
           -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH \
           -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH \
           -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
-          -DOPENSSL_ROOT_DIR=$OPENSSL_ANDROID \
-          -DOPENSSL_INCLUDE_DIR=$OPENSSL_ANDROID/include \
-          -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_ANDROID/lib/libcrypto.a \
-          -DOPENSSL_SSL_LIBRARY=$OPENSSL_ANDROID/lib/libssl.a \
+          -DOPENSSL_ROOT_DIR=$OPENSSL_ANDROID_ARM64 \
+          -DOPENSSL_INCLUDE_DIR=$OPENSSL_ANDROID_ARM64/include \
+          -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_ANDROID_ARM64/lib/libcrypto.a \
+          -DOPENSSL_SSL_LIBRARY=$OPENSSL_ANDROID_ARM64/lib/libssl.a \
           -DTD_ENABLE_JNI=ON \
           $GITHUB_WORKSPACE
 
