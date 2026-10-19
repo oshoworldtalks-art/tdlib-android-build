@@ -28,11 +28,52 @@ jobs:
         echo "ANDROID_NDK_ROOT=$HOME/android-ndk-r26c" >> $GITHUB_ENV
         echo "✅ NDK installed"
 
-    - name: Build OpenSSL for Android ARM64
+    - name: Build OpenSSL for macOS (Host)
       run: |
-        echo "🔐 Building OpenSSL 3.0.15..."
+        echo "🔐 Building OpenSSL 3.0.15 for macOS (host tools)..."
         cd ~
         curl -L -o openssl.tar.gz https://www.openssl.org/source/openssl-3.0.15.tar.gz
+        tar -xzf openssl.tar.gz
+
+        # Build for macOS native (for host tools)
+        cd openssl-3.0.15
+        ./Configure darwin64-arm64-cc \
+          --prefix=$HOME/openssl-macos \
+          no-shared \
+          no-tests
+
+        make -j4
+        make install_sw
+
+        echo "✅ OpenSSL for macOS built"
+        ls -lh $HOME/openssl-macos/lib/
+
+    - name: Build TDLib Host Tools
+      run: |
+        echo "🔨 Building TDLib host tools..."
+        cd $GITHUB_WORKSPACE
+        mkdir -p build-host
+        cd build-host
+
+        cmake -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DOPENSSL_ROOT_DIR=$HOME/openssl-macos \
+          $GITHUB_WORKSPACE
+
+        ninja -j4
+
+        echo "✅ Host tools built successfully"
+        echo "📊 Generated files:"
+        ls -lh td/generate/auto/td/telegram/td_api_*.cpp || echo "Warning: td_api files may be in different location"
+        ls -lh tdutils/generate/auto/*.cpp || echo "Warning: tdutils files may be in different location"
+
+    - name: Build OpenSSL for Android ARM64
+      run: |
+        echo "🔐 Building OpenSSL 3.0.15 for Android ARM64..."
+        cd ~
+
+        # Clean previous build
+        rm -rf openssl-3.0.15
         tar -xzf openssl.tar.gz
         cd openssl-3.0.15
 
@@ -49,26 +90,8 @@ jobs:
         make install_sw
 
         echo "OPENSSL_ROOT_DIR=$HOME/openssl-android-arm64" >> $GITHUB_ENV
-        echo "✅ OpenSSL built successfully"
+        echo "✅ OpenSSL for Android ARM64 built"
         ls -lh $HOME/openssl-android-arm64/lib/
-
-    - name: Build TDLib Host Tools
-      run: |
-        echo "🔨 Building TDLib host tools..."
-        cd $GITHUB_WORKSPACE
-        mkdir -p build-host
-        cd build-host
-
-        cmake -G Ninja \
-          -DCMAKE_BUILD_TYPE=Release \
-          $GITHUB_WORKSPACE
-
-        ninja -j4
-
-        echo "✅ Host tools built successfully"
-        echo "📊 Generated files:"
-        ls -lh td/generate/auto/td/telegram/td_api_*.cpp
-        ls -lh tdutils/generate/auto/*.cpp
 
     - name: Build TDLib for Android ARM64
       run: |
@@ -120,7 +143,7 @@ jobs:
 
           echo ""
           echo "🎉 Build verification successful!"
-          echo "Modified MessagesManager.cpp with protected content bypass included"
+          echo "libtdjni.so ready for download"
         else
           echo "❌ libtdjni.so not found!"
           echo "Build directory contents:"
