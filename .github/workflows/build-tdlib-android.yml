@@ -115,7 +115,7 @@ jobs:
           -DOPENSSL_INCLUDE_DIR=$OPENSSL_ANDROID_ARM64/include \
           -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_ANDROID_ARM64/lib/libcrypto.a \
           -DOPENSSL_SSL_LIBRARY=$OPENSSL_ANDROID_ARM64/lib/libssl.a \
-          -DTD_ENABLE_JNI=ON \
+          -DANDROID=ON \
           $GITHUB_WORKSPACE
 
         echo ""
