@@ -106,37 +106,41 @@ jobs:
           -DANDROID_PLATFORM=android-21 \
           -DCMAKE_BUILD_TYPE=Release \
           -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
-          $GITHUB_WORKSPACE/example/android
+          -DTD_ENABLE_JNI=ON \
+          $GITHUB_WORKSPACE
 
-        ninja -j4
+        ninja -j4 tdjni
 
         echo "✅ TDLib Android build complete"
         echo "📦 Built JNI library:"
-        ls -lh libtdjni.so
+        find . -name "libtdjni.so" -exec ls -lh {} \;
 
     - name: Verify libtdjni.so
       run: |
         echo "📊 Verifying libtdjni.so..."
         cd build-android
 
-        if [ -f "libtdjni.so" ]; then
-          echo "✅ libtdjni.so found"
+        # Find libtdjni.so location
+        TDJNI_PATH=$(find . -name "libtdjni.so" | head -n 1)
+
+        if [ -n "$TDJNI_PATH" ]; then
+          echo "✅ libtdjni.so found at: $TDJNI_PATH"
           echo ""
           echo "📏 File details:"
-          ls -lh libtdjni.so
+          ls -lh "$TDJNI_PATH"
           echo ""
           echo "🔍 File type:"
-          file libtdjni.so
+          file "$TDJNI_PATH"
           echo ""
 
-          if file libtdjni.so | grep -q "ARM aarch64"; then
+          if file "$TDJNI_PATH" | grep -q "ARM aarch64"; then
             echo "✅ Correct architecture: ARM64 (aarch64)"
           else
             echo "❌ Wrong architecture detected!"
             exit 1
           fi
 
-          if file libtdjni.so | grep -q "shared object"; then
+          if file "$TDJNI_PATH" | grep -q "shared object"; then
             echo "✅ Correct file type: Shared library"
           else
             echo "❌ Not a shared library!"
@@ -146,10 +150,13 @@ jobs:
           echo ""
           echo "🎉 Build verification successful!"
           echo "libtdjni.so ready for download"
+
+          # Copy to root for easier artifact upload
+          cp "$TDJNI_PATH" ./libtdjni.so
         else
           echo "❌ libtdjni.so not found!"
           echo "Build directory contents:"
-          ls -la
+          find . -type f -name "*.so" || echo "No .so files found"
           exit 1
         fi
 
