@@ -32,17 +32,21 @@ jobs:
       run: |
         echo "🔐 Building OpenSSL 3.0.15..."
         cd ~
-        curl -O https://www.openssl.org/source/openssl-3.0.15.tar.gz
-        tar -xzf openssl-3.0.15.tar.gz
+        curl -L -o openssl.tar.gz https://www.openssl.org/source/openssl-3.0.15.tar.gz
+        tar -xzf openssl.tar.gz
         cd openssl-3.0.15
+
+        export ANDROID_NDK_ROOT=$HOME/android-ndk-r26c
+        export PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin:$PATH
 
         ./Configure android-arm64 \
           -D__ANDROID_API__=21 \
           --prefix=$HOME/openssl-android-arm64 \
-          no-shared
+          no-shared \
+          no-tests
 
         make -j4
-        make install
+        make install_sw
 
         echo "OPENSSL_ROOT_DIR=$HOME/openssl-android-arm64" >> $GITHUB_ENV
         echo "✅ OpenSSL built successfully"
