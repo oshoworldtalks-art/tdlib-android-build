@@ -102,12 +102,12 @@ jobs:
 
     - name: Build TDLib for Android ARM64
       run: |
-        echo "🎯 Building TDLib for Android arm64-v8a with JNI..."
+        echo "🎯 Building TDLib for Android arm64-v8a with JSON interface..."
         cd $GITHUB_WORKSPACE
         mkdir -p build-android
         cd build-android
 
-        # Build from example/android/CMakeLists.txt which defines the tdjni target
+        # Use JSON interface (-DTD_ANDROID_JSON=ON) which is stable and maintained
         cmake -G Ninja \
           -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=arm64-v8a \
@@ -120,6 +120,7 @@ jobs:
           -DOPENSSL_INCLUDE_DIR=$OPENSSL_ANDROID_ARM64/include \
           -DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_ANDROID_ARM64/lib/libcrypto.a \
           -DOPENSSL_SSL_LIBRARY=$OPENSSL_ANDROID_ARM64/lib/libssl.a \
+          -DTD_ANDROID_JSON=ON \
           $GITHUB_WORKSPACE/example/android
 
         echo ""
@@ -127,42 +128,42 @@ jobs:
         echo ""
 
         echo "Available targets:"
-        ninja -t targets 2>/dev/null | grep -i "jni" || echo "Target listing not available"
+        ninja -t targets 2>/dev/null | grep -i "td" | head -20 || echo "Target listing not available"
         echo ""
 
-        echo "🔍 Building target: tdjni..."
-        ninja -j4 tdjni
+        echo "🔍 Building TDLib..."
+        ninja -j4
 
         echo "✅ TDLib Android build complete"
-        echo "📦 Built JNI library:"
-        find . -name "libtdjni.so" -exec ls -lh {} \;
+        echo "📦 Built libraries:"
+        find . -name "*.so" -o -name "*.a" | grep -E "libtd|tdjson" | xargs ls -lh
 
-    - name: Verify libtdjni.so
+    - name: Verify libtdjson.so
       run: |
-        echo "📊 Verifying libtdjni.so..."
+        echo "📊 Verifying libtdjson.so..."
         cd build-android
 
-        # Find libtdjni.so location
-        TDJNI_PATH=$(find . -name "libtdjni.so" | head -n 1)
+        # Find libtdjson.so location
+        TDJSON_PATH=$(find . -name "libtdjson.so" | head -n 1)
 
-        if [ -n "$TDJNI_PATH" ]; then
-          echo "✅ libtdjni.so found at: $TDJNI_PATH"
+        if [ -n "$TDJSON_PATH" ]; then
+          echo "✅ libtdjson.so found at: $TDJSON_PATH"
           echo ""
           echo "📏 File details:"
-          ls -lh "$TDJNI_PATH"
+          ls -lh "$TDJSON_PATH"
           echo ""
           echo "🔍 File type:"
-          file "$TDJNI_PATH"
+          file "$TDJSON_PATH"
           echo ""
 
-          if file "$TDJNI_PATH" | grep -q "ARM aarch64"; then
+          if file "$TDJSON_PATH" | grep -q "ARM aarch64"; then
             echo "✅ Correct architecture: ARM64 (aarch64)"
           else
             echo "❌ Wrong architecture detected!"
             exit 1
           fi
 
-          if file "$TDJNI_PATH" | grep -q "shared object"; then
+          if file "$TDJSON_PATH" | grep -q "shared object"; then
             echo "✅ Correct file type: Shared library"
           else
             echo "❌ Not a shared library!"
@@ -171,12 +172,12 @@ jobs:
 
           echo ""
           echo "🎉 Build verification successful!"
-          echo "libtdjni.so ready for download"
+          echo "libtdjson.so ready for download"
 
           # Copy to root for easier artifact upload
-          cp "$TDJNI_PATH" ./libtdjni.so
+          cp "$TDJSON_PATH" ./libtdjson.so
         else
-          echo "❌ libtdjni.so not found!"
+          echo "❌ libtdjson.so not found!"
           echo "Build directory contents:"
           find . -type f -name "*.so" || echo "No .so files found"
           exit 1
@@ -186,7 +187,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: tdlib-android-arm64
-        path: build-android/libtdjni.so
+        path: build-android/libtdjson.so
         retention-days: 7
 
     - name: Build summary
@@ -194,15 +195,14 @@ jobs:
         echo "## 🎉 Build Successful!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📦 Artifact Details:" >> $GITHUB_STEP_SUMMARY
-        echo "- **File:** libtdjni.so" >> $GITHUB_STEP_SUMMARY
+        echo "- **File:** libtdjson.so (JSON interface)" >> $GITHUB_STEP_SUMMARY
         echo "- **Architecture:** ARM64 (aarch64)" >> $GITHUB_STEP_SUMMARY
         echo "- **Platform:** Android API 21+" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Type:** Release" >> $GITHUB_STEP_SUMMARY
-        echo "- **Modified:** MessagesManager.cpp (protected content bypass)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📥 Download:" >> $GITHUB_STEP_SUMMARY
         echo "Go to Actions → This workflow run → Artifacts section" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         cd build-android
-        FILE_SIZE=$(ls -lh libtdjni.so | awk '{print $5}')
+        FILE_SIZE=$(ls -lh libtdjson.so | awk '{print $5}')
         echo "- **File Size:** $FILE_SIZE" >> $GITHUB_STEP_SUMMARY
