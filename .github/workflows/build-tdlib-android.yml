@@ -92,8 +92,11 @@ jobs:
         echo "✅ OpenSSL for Android ARM64 built"
         ls -lh $HOME/openssl-android-arm64/lib/
 
-        # Export for use in build
+    - name: Export OpenSSL path for build
+      run: |
         echo "OPENSSL_ANDROID_ARM64=$HOME/openssl-android-arm64" >> $GITHUB_ENV
+        echo "✅ OpenSSL path exported: $OPENSSL_ANDROID_ARM64"
+        echo "📂 OpenSSL lib directory: $OPENSSL_ANDROID_ARM64/lib"
 
     - name: Build TDLib for Android ARM64
       run: |
@@ -122,6 +125,11 @@ jobs:
         echo "📋 CMake configuration complete. Building..."
         echo ""
 
+        echo "Available targets:"
+        ninja -t targets 2>/dev/null | grep -E "^\s+(tdjni|tdcore|tdclient|tdnet|tddb)" || echo "Target listing not available"
+        echo ""
+
+        echo "🔍 Building target: tdjni..."
         ninja -j4 tdjni
 
         echo "✅ TDLib Android build complete"
