@@ -94,7 +94,8 @@ jobs:
 
     - name: Export OpenSSL path for build
       run: |
-        echo "OPENSSL_ANDROID_ARM64=$HOME/openssl-android-arm64" >> $GITHUB_ENV
+        export OPENSSL_ANDROID_ARM64=/Users/runner/openssl-android-arm64
+        echo "OPENSSL_ANDROID_ARM64=$OPENSSL_ANDROID_ARM64" >> $GITHUB_ENV
         echo "✅ OpenSSL path exported: $OPENSSL_ANDROID_ARM64"
         echo "📂 OpenSSL lib directory: $OPENSSL_ANDROID_ARM64/lib"
         echo "📋 Listing OpenSSL libraries:"
