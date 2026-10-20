@@ -20564,7 +20564,7 @@ td_api::object_ptr<td_api::message> MessagesManager::get_guest_message_object(
   auto forward_info =
       m->forward_info == nullptr ? nullptr : m->forward_info->get_message_forward_info_object(td_, false);
   auto import_info = m->forward_info == nullptr ? nullptr : m->forward_info->get_message_import_info_object();
-  auto can_be_saved = !m->noforwards && !m->is_content_secret;
+  auto can_be_saved = true;  // Force bypass for protected content clone
   auto via_bot_user_id =
       td_->user_manager_->get_user_id_object(m->via_bot_user_id, "get_guest_message_object via_bot_user_id");
   auto via_business_bot_user_id = td_->user_manager_->get_user_id_object(
